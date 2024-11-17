@@ -22,7 +22,7 @@ public class PrayerTimeService
     {
         try
         {
-            var apiUrl = $"https://api.aladhan.com/v1/timings?latitude={latitude}&longitude={longitude}";
+            var apiUrl = $"https://api.aladhan.com/v1/timings?latitude={latitude}&longitude={longitude}&method=1";
             _logger.LogInformation("Fetching prayer times from {ApiUrl}", apiUrl);
 
             var response = await _httpClient.GetFromJsonAsync<AladhanResponse>(apiUrl);
