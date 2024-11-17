@@ -1,0 +1,91 @@
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+.settings-page {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: #2d2d2d;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+h3 {
+    color: #4CAF50;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.input-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #888;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    background-color: #404040;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: white;
+}
+
+.adjustments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.time-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.input-with-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.input-with-label input {
+    width: 60px;
+}
+
+.input-with-label span {
+    color: #888;
+}
+
+.save-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.save-button:hover {
+    background-color: #45a049;
+} 

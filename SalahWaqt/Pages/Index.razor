@@ -1,0 +1,183 @@
+﻿@page "/"
+@using System.Globalization
+@using SalahWaqt.Models
+@using SalahWaqt.Services
+@inject PrayerTimeService PrayerService
+@inject IJSRuntime JSRuntime
+
+<div class="prayer-app">
+    <div class="update-info">
+        Updated on: @DateTime.Now.ToString("dddd, dd MMMM yyyy, hh:mm tt")
+    </div>
+
+    <div class="time-cards">
+        <div class="card current-time">
+            <h3>Current Time</h3>
+            <div class="time">@CurrentTime</div>
+        </div>
+
+        <div class="card current-prayer">
+            <h3>Current Waqt</h3>
+            <div class="prayer-name">@(CurrentPrayer?.Name ?? "Loading...")</div>
+            <div class="started-at">Started At</div>
+            <div class="time">@(CurrentPrayer?.StartTime.ToString("hh:mm tt") ?? "...")</div>
+        </div>
+
+        <div class="card next-prayer">
+            <h3>Next Prayer</h3>
+            <div class="prayer-name">
+                "@(NextPrayer?.Name ?? "Loading...")" at @(NextPrayer?.StartTime.ToString("hh:mm tt") ?? "...")
+            </div>
+            <div class="time-remaining">In: @TimeUntilNextPrayer</div>
+        </div>
+    </div>
+
+    <div class="prayer-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Waqt</th>
+                    <th>Begins at</th>
+                    <th>Prayer at</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var prayer in PrayerTimings.Where(p => p.Name != "Jum'ah"))
+                {
+                    <tr>
+                        <td>@prayer.Name</td>
+                        <td>@prayer.StartTime.ToString("hh:mm tt")</td>
+                        <td>@prayer.AdjustedStartTime.ToString("hh:mm tt")</td>
+                    </tr>
+                }
+                <tr class="jumah-row">
+                    <td>Jum'ah</td>
+                    <td>@(PrayerTimings.FirstOrDefault(p => p.Name == "Jum'ah")?.StartTime.ToString("hh:mm tt"))</td>
+                    <td>@(PrayerTimings.FirstOrDefault(p => p.Name == "Jum'ah")?.AdjustedStartTime.ToString("hh:mm tt"))</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+@code {
+    private List<PrayerTime> PrayerTimings { get; set; } = new();
+    private string Latitude { get; set; } = "23.810331";
+    private string Longitude { get; set; } = "90.412521";
+    private string CurrentTime { get; set; } = DateTime.Now.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture);
+    private Timer? _timer;
+    private PrayerTime? CurrentPrayer { get; set; }
+    private PrayerTime? NextPrayer { get; set; }
+    private string TimeUntilNextPrayer { get; set; } = "Loading...";
+    private DateTime _lastRefreshDate = DateTime.Today;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            var savedLat = await JSRuntime.InvokeAsync<string>("localStorage.getItem", new[] { "latitude" });
+            var savedLong = await JSRuntime.InvokeAsync<string>("localStorage.getItem", new[] { "longitude" });
+            
+            if (!string.IsNullOrEmpty(savedLat) && !string.IsNullOrEmpty(savedLong))
+            {
+                Latitude = savedLat;
+                Longitude = savedLong;
+            }
+            
+            await LoadPrayerTimes();
+            StartClock();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+            await LoadPrayerTimes();
+            StartClock();
+        }
+    }
+
+    private void StartClock()
+    {
+        _timer = new Timer(async _ => await UpdateClock(), null, 0, 1000);
+    }
+
+    private async Task UpdateClock()
+    {
+        CurrentTime = DateTime.Now.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture);
+        
+        // Check if we need to refresh prayer times
+        if (DateTime.Now.Date != _lastRefreshDate)
+        {
+            await LoadPrayerTimes();
+            _lastRefreshDate = DateTime.Now.Date;
+        }
+        
+        UpdateCurrentWaqt();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadPrayerTimes()
+    {
+        try
+        {
+            PrayerTimings = await PrayerService.GetPrayerTimes(Latitude, Longitude);
+            _lastRefreshDate = DateTime.Now.Date;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading prayer times: {ex.Message}");
+        }
+    }
+
+    private void UpdateCurrentWaqt()
+    {
+        var now = DateTime.Now;
+        var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+
+        var currentPrayer = PrayerTimings
+            .LastOrDefault(p => today.Add(p.StartTime.TimeOfDay) <= now)
+            ?? PrayerTimings.Last();
+
+        CurrentPrayer = currentPrayer;
+
+        if (currentPrayer.Name == "Isha")
+        {
+            NextPrayer = PrayerTimings.First(); 
+            
+            var midnight = tomorrow;
+            var timeToMidnight = midnight - now;
+            
+            var fajrTime = tomorrow.Add(NextPrayer.StartTime.TimeOfDay);
+            var midnightToFajr = fajrTime - midnight;
+            
+            var totalTimeUntilFajr = timeToMidnight + midnightToFajr;
+            TimeUntilNextPrayer = FormatTimeRemaining(totalTimeUntilFajr);
+        }
+        else
+        {
+            var currentIndex = PrayerTimings.IndexOf(currentPrayer);
+            NextPrayer = PrayerTimings[currentIndex + 1];
+            
+            var nextPrayerTime = today.Add(NextPrayer.StartTime.TimeOfDay);
+            var timeUntilNext = nextPrayerTime - now;
+            TimeUntilNextPrayer = FormatTimeRemaining(timeUntilNext);
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string FormatTimeRemaining(TimeSpan timeSpan)
+    {
+        if (timeSpan.TotalHours >= 1)
+        {
+            return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
+        }
+        return $"{timeSpan.Minutes}m {timeSpan.Seconds}s";
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

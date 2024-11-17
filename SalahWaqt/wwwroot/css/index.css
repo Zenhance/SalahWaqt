@@ -1,0 +1,83 @@
+.prayer-app {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.update-info {
+    text-align: center;
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.time-cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: #2d2d2d;
+    border-radius: 15px;
+    padding: 20px;
+    min-width: 300px;
+    text-align: center;
+}
+
+.card h3 {
+    color: #4CAF50;
+    margin-bottom: 15px;
+}
+
+.time {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.prayer-name {
+    font-size: 1.5em;
+    margin: 10px 0;
+}
+
+.next-prayer {
+    background-color: #000;
+}
+
+.time-remaining {
+    color: #4CAF50;
+    font-size: 1.2em;
+    margin-top: 10px;
+}
+
+.prayer-table {
+    background-color: #2d2d2d;
+    border-radius: 15px;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #404040;
+}
+
+.jumah-row {
+    background-color: #404040;
+}
+
+.calculation-info {
+    text-align: center;
+    color: #888;
+    margin-top: 20px;
+    font-size: 0.9em;
+} 

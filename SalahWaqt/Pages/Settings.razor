@@ -1,0 +1,129 @@
+﻿@page "/settings"
+@using SalahWaqt.Models
+@using SalahWaqt.Services
+@inject PrayerTimeAdjustmentService AdjustmentService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Prayer Time Settings</PageTitle>
+
+<div class="settings-page">
+    <div class="settings-container">
+        <div class="card location-card">
+            <h3>Location Settings</h3>
+            <div class="input-group">
+                <div class="input-field">
+                    <label>Latitude</label>
+                    <input type="text" @bind="Latitude" />
+                </div>
+                <div class="input-field">
+                    <label>Longitude</label>
+                    <input type="text" @bind="Longitude" />
+                </div>
+            </div>
+            <button class="save-button" @onclick="UpdateLocation">Update Location</button>
+        </div>
+
+        <div class="card adjustment-card">
+            <h3>Prayer Time Adjustments</h3>
+            @if (isLoaded)
+            {
+                <div class="adjustments-grid">
+                    @foreach (var prayer in PrayerNames.Where(p => p != "Sunrise"))
+                    {
+                        <div class="adjustment-item">
+                            <label>@prayer</label>
+                            <div class="time-inputs">
+                                <div class="input-with-label">
+                                    <input type="number" 
+                                           min="0" 
+                                           max="23" 
+                                           @bind="Adjustments[prayer].Hours" />
+                                    <span>h</span>
+                                </div>
+                                <div class="input-with-label">
+                                    <input type="number" 
+                                           min="0" 
+                                           max="59" 
+                                           @bind="Adjustments[prayer].Minutes" />
+                                    <span>m</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button class="save-button" @onclick="SaveAdjustments">Save Adjustments</button>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    private Dictionary<string, TimeAdjustment> Adjustments { get; set; } = new();
+    private readonly List<string> PrayerNames = new() { "Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha", "Jum'ah" };
+    private bool isLoaded = false;
+    private string Latitude { get; set; } = "23.810331";
+    private string Longitude { get; set; } = "90.412521";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            foreach (var prayer in PrayerNames)
+            {
+                Adjustments[prayer] = new TimeAdjustment();
+            }
+
+            var savedAdjustments = await AdjustmentService.LoadAdjustments();
+            
+            foreach (var prayer in PrayerNames)
+            {
+                if (savedAdjustments.ContainsKey(prayer))
+                {
+                    Adjustments[prayer] = savedAdjustments[prayer];
+                }
+            }
+
+            isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+            foreach (var prayer in PrayerNames)
+            {
+                Adjustments[prayer] = new TimeAdjustment();
+            }
+            isLoaded = true;
+        }
+    }
+
+    private async Task SaveAdjustments()
+    {
+        try
+        {
+            await AdjustmentService.SaveAdjustments(Adjustments);
+            await JSRuntime.InvokeVoidAsync("alert", "Settings saved successfully!");
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving settings: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateLocation()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "latitude", Latitude);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "longitude", Longitude);
+            NavigationManager.NavigateTo("/", true);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error updating location: {ex.Message}");
+        }
+    }
+}
