@@ -105,7 +105,6 @@
     {
         CurrentTime = DateTime.Now.ToString("hh:mm:ss tt", CultureInfo.InvariantCulture);
         
-        // Check if we need to refresh prayer times
         if (DateTime.Now.Date != _lastRefreshDate)
         {
             await LoadPrayerTimes();

@@ -28,7 +28,6 @@ public class PrayerTimeService
             var response = await _httpClient.GetFromJsonAsync<AladhanResponse>(apiUrl);
             var prayers = response?.Data.Timings.ToPrayerTimeList() ?? new List<PrayerTime>();
         
-            // Load and apply adjustments
             var adjustments = await _adjustmentService.LoadAdjustments();
             foreach (var prayer in prayers)
             {
@@ -36,7 +35,6 @@ public class PrayerTimeService
                 {
                     prayer.AdjustmentHours = adjustment.Hours;
                     prayer.AdjustmentMinutes = adjustment.Minutes;
-                    // Update the StartTime to include adjustments
                     prayer.StartTime = prayer.StartTime.AddHours(adjustment.Hours).AddMinutes(adjustment.Minutes);
                 }
             }
